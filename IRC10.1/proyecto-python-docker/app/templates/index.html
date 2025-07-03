@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALL homeworks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ToDo App con Docker & Python</h1>
+            <p>Una app muy buena y completa para tareas:)</p>
+        </header>
+        
+        <div class="form-container">
+            <h2>Añadir nueva tarea</h2>
+            <form action="/add" method="POST">
+                <input type="text" name="todo" placeholder="Nombre de la tarea">
+                <textarea name="description" placeholder="Descripción (opcional)"></textarea>
+                <button type="submit">Añadir</button>
+            </form>
+        </div>
+
+        <div class="todo-container">
+            <h2>Mis tareas</h2>
+            
+            {% if todos %}
+                <ul class="todo-list">
+                {% for todo in todos %}
+                    <li class="todo-item {% if todo.completed %}completed{% endif %}">
+                        <div class="todo-content">
+                            <h3>{{ todo.name }}</h3>
+                            {% if todo.description %}
+                                <p>{{ todo.description }}</p>
+                            {% endif %}
+                            <small>Creado: {{ todo.created_at|format_date }}</small>
+                        </div>
+                        <div class="todo-actions">
+                            <a href="{{ url_for('complete_todo', todo_id=todo._id) }}" class="btn-complete">
+                                {% if todo.completed %}Marcar como pendiente{% else %}Completar{% endif %}
+                            </a>
+                            <a href="{{ url_for('delete_todo', todo_id=todo._id) }}" class="btn-delete">Eliminar</a>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-todos">No hay tareas todavía. ¡Añade una!</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+<footer>
+    Create By TITZ-LOVERS ®
+</footer>
+</html>
