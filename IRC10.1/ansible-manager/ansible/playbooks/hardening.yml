@@ -1,0 +1,26 @@
+---
+- name: Hardening básico del servidor
+  hosts: servidor
+  become: true
+  tasks:
+    - name: Actualizar paquetes del sistema
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Instalar fail2ban
+      apt:
+        name: fail2ban
+        state: present
+
+    - name: Deshabilitar root por SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+
+    - name: Reiniciar el servicio SSH
+      service:
+        name: ssh
+        state: restarted
+

@@ -1,0 +1,2 @@
+[servidor]
+20.20.20.17 ansible_user=jaimozzilla ansible_ssh_private_key_file=/ansible/keys/id_rsa ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_become=true
