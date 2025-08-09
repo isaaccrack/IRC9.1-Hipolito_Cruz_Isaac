@@ -1,0 +1,101 @@
+---
+- name: Configuración completa de Switch Cisco 2960
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    vlan1_id: 35
+    vlan1_nombre: Soporte
+    vlan1_interfaces: ['FastEthernet0/5', 'FastEthernet0/6']
+    vlan2_id: 45
+    vlan2_nombre: Ventas
+    vlan2_interfaces: ['FastEthernet0/10', 'FastEthernet0/11']
+    troncal_interface: GigabitEthernet0/2
+    enable_password: cisco
+    console_password: cisco
+    motd_banner: 'SOLO PRIVILEGIADOS'
+
+  tasks:
+    - name: Establecer el nombre del host
+      cisco.ios.ios_config:
+        lines:
+          - hostname Redes-UTnianos
+
+    - name: Crear VLAN 1
+      cisco.ios.ios_config:
+        lines:
+          - name {{ vlan1_nombre }}
+        parents: vlan {{ vlan1_id }}
+
+    - name: Asignar interfaces a VLAN 1
+      cisco.ios.ios_config:
+        lines:
+          - switchport access vlan {{ vlan1_id }}
+          - switchport mode access
+        parents: interface {{ item }}
+      loop: "{{ vlan1_interfaces }}"
+
+    - name: Crear VLAN 2
+      cisco.ios.ios_config:
+        lines:
+          - name {{ vlan2_nombre }}
+        parents: vlan {{ vlan2_id }}
+
+    - name: Asignar interfaces a VLAN 2
+      cisco.ios.ios_config:
+        lines:
+          - switchport access vlan {{ vlan2_id }}
+          - switchport mode access
+        parents: interface {{ item }}
+      loop: "{{ vlan2_interfaces }}"
+
+    - name: Configurar interfaz trunk (método simplificado)
+      cisco.ios.ios_config:
+        lines:
+          - switchport mode trunk
+          - switchport trunk allowed vlan all
+        parents: interface {{ troncal_interface }}
+      ignore_errors: yes
+
+    - name: Configurar trunk alternativo si el anterior falla
+      cisco.ios.ios_config:
+        lines:
+          - switchport mode trunk
+        parents: interface {{ troncal_interface }}
+      when: ansible_failed_result is defined
+
+    - name: Configurar seguridad básica
+      cisco.ios.ios_config:
+        lines:
+          - enable secret {{ enable_password }}
+
+    - name: Configurar contraseña de consola
+      cisco.ios.ios_config:
+        lines:
+          - password {{ console_password }}
+          - login
+        parents: line console 0
+
+    - name: Configurar banner MOTD
+      cisco.ios.ios_config:
+        lines:
+          - "banner motd ${{ motd_banner }}$"
+      ignore_errors: yes
+
+    - name: Guardar configuración
+      cisco.ios.ios_config:
+        save_when: always
+
+    - name: Validar configuración
+      cisco.ios.ios_command:
+        commands:
+          - show vlan brief
+          - show running-config | include hostname
+          - show interfaces trunk
+      register: validation_output
+
+    - name: Mostrar resultado de validación
+      debug:
+        var: validation_output.stdout_lines

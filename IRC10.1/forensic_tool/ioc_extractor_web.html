@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extractor de Indicadores de Compromiso (IoCs)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 300;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    .main-content {
+      padding: 2rem;
+    }
+
+    #uploadSection {
+      margin-bottom: 2rem;
+    }
+
+    #uploadArea {
+      border: 3px dashed #667eea;
+      border-radius: 15px;
+      padding: 3rem;
+      text-align: center;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #uploadArea::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    #uploadArea:hover::before {
+      left: 100%;
+    }
+
+    #uploadArea.dragover {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      transform: scale(1.02);
+    }
+
+    #uploadArea i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+      color: #667eea;
+    }
+
+    #uploadArea.dragover i {
+      color: white;
+    }
+
+    #uploadArea p {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #uploadArea small {
+      opacity: 0.7;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .processing {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #results {
+      display: none;
+    }
+
+    .ioc-section {
+      margin-bottom: 2rem;
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-left: 5px solid #667eea;
+    }
+
+    .ioc-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .ioc-header i {
+      font-size: 1.5rem;
+      margin-right: 1rem;
+      color: #667eea;
+    }
+
+    .ioc-header h3 {
+      color: #333;
+      font-size: 1.3rem;
+    }
+
+    .ioc-count {
+      background: #667eea;
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-left: auto;
+    }
+
+    .ioc-list {
+      display: grid;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .ioc-item {
+      background: #f8f9fa;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border-left: 3px solid #667eea;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      word-break: break-all;
+      transition: all 0.3s ease;
+    }
+
+    .ioc-item:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 1rem;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 1rem;
+        border-radius: 15px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .summary-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-shield-alt"></i> Extractor de IoCs</h1>
+      <p>Herramienta forense para extraer Indicadores de Compromiso</p>
+    </div>
+
+    <div class="main-content">
+      <div id="uploadSection">
+        <div id="uploadArea">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Sube tu archivo de texto para análisis</p>
+          <small>Arrastra y suelta o haz clic para seleccionar archivo (.txt, .log, .md)</small>
+          <input type="file" id="textFile" accept=".txt,.log,.md,text/*">
+        </div>
+      </div>
+
+      <div class="processing" id="processing">
+        <div class="spinner"></div>
+        <p>Procesando archivo y extrayendo IoCs...</p>
+      </div>
+
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    class IoCExtractor {
+      constructor() {
+        this.setupEventListeners();
+        this.patterns = {
+          ips: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
+          ipv6: /\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b/g,
+          domains: /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}\b/g,
+          urls: /https?:\/\/(?:[-\w.]|(?:%[\da-fA-F]{2}))+[^\s]*/g,
+          emails: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+          hashes: /\b[a-fA-F0-9]{32,64}\b/g,
+          file_paths: /[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*/g,
+          registry_keys: /HKEY_[A-Z_]+\\[^\\/:*?"<>|\r\n]+/g
+        };
+      }
+
+      setupEventListeners() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('textFile');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+          this.handleFile(e.dataTransfer.files[0]);
+        });
+      }
+
+      async handleFile(file) {
+        if (!file) return;
+
+        this.showProcessing();
+        
+        try {
+          const text = await this.readFile(file);
+          const iocs = this.extractIoCs(text);
+          this.displayResults(iocs, file.name);
+        } catch (error) {
+          this.showError('Error al procesar el archivo: ' + error.message);
+        }
+      }
+
+      readFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.onerror = e => reject(new Error('Error al leer el archivo'));
+          reader.readAsText(file, 'UTF-8');
+        });
+      }
+
+      extractIoCs(text) {
+        const iocs = {};
+        
+        Object.keys(this.patterns).forEach(type => {
+          const matches = text.match(this.patterns[type]) || [];
+          iocs[type] = [...new Set(matches)].filter(match => this.validateIoC(type, match));
+        });
+
+        return iocs;
+      }
+
+      validateIoC(type, value) {
+        switch(type) {
+          case 'ips':
+            const parts = value.split('.');
+            return parts.every(part => parseInt(part) <= 255);
+          case 'domains':
+            return !value.match(/^\d+\.\d+\.\d+\.\d+$/) && value.includes('.');
+          case 'hashes':
+            return value.length === 32 || value.length === 40 || value.length === 64;
+          default:
+            return true;
+        }
+      }
+
+      showProcessing() {
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('processing').style.display = 'block';
+        document.getElementById('results').style.display = 'none';
+      }
+
+      displayResults(iocs, filename) {
+        const totalIoCs = Object.values(iocs).reduce((sum, arr) => sum + arr.length, 0);
+        
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = this.generateResultsHTML(iocs, totalIoCs, filename);
+        
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('processing').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+
+        this.setupResultsEventListeners(iocs, filename);
+      }
+
+      generateResultsHTML(iocs, totalIoCs, filename) {
+        const iocTypes = {
+          ips: { name: 'Direcciones IP', icon: 'fas fa-network-wired' },
+          ipv6: { name: 'Direcciones IPv6', icon: 'fas fa-project-diagram' },
+          domains: { name: 'Dominios', icon: 'fas fa-globe' },
+          urls: { name: 'URLs', icon: 'fas fa-link' },
+          emails: { name: 'Correos Electrónicos', icon: 'fas fa-envelope' },
+          hashes: { name: 'Hashes', icon: 'fas fa-fingerprint' },
+          file_paths: { name: 'Rutas de Archivo', icon: 'fas fa-folder-open' },
+          registry_keys: { name: 'Claves de Registro', icon: 'fas fa-key' }
+        };
+
+        let html = `
+          <div class="summary-card">
+            <h2><i class="fas fa-chart-pie"></i> Resumen del Análisis</h2>
+            <p><strong>Archivo:</strong> ${filename}</p>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
+            <div class="summary-stats">
+        `;
+
+        Object.keys(iocTypes).forEach(type => {
+          const count = iocs[type].length;
+          html += `
+            <div class="stat-item">
+              <span class="stat-number">${count}</span>
+              <span class="stat-label">${iocTypes[type].name}</span>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="downloadJson">
+              <i class="fas fa-download"></i> Descargar JSON
+            </button>
+            <button class="btn btn-secondary" id="newAnalysis">
+              <i class="fas fa-redo"></i> Nuevo Análisis
+            </button>
+          </div>
+        `;
+
+        if (totalIoCs === 0) {
+          html += `
+            <div class="empty-state">
+              <i class="fas fa-search"></i>
+              <h3>No se encontraron IoCs</h3>
+              <p>El archivo no contiene indicadores de compromiso reconocibles.</p>
+            </div>
+          `;
+        } else {
+          Object.keys(iocTypes).forEach(type => {
+            if (iocs[type].length > 0) {
+              html += `
+                <div class="ioc-section">
+                  <div class="ioc-header">
+                    <i class="${iocTypes[type].icon}"></i>
+                    <h3>${iocTypes[type].name}</h3>
+                    <span class="ioc-count">${iocs[type].length}</span>
+                  </div>
+                  <div class="ioc-list">
+              `;
+              
+              iocs[type].forEach(ioc => {
+                html += `<div class="ioc-item">${this.escapeHtml(ioc)}</div>`;
+              });
+              
+              html += `
+                  </div>
+                </div>
+              `;
+            }
+          });
+        }
+
+        return html;
+      }
+
+      setupResultsEventListeners(iocs, filename) {
+        document.getElementById('downloadJson').addEventListener('click', () => {
+          this.downloadJSON(iocs, filename);
+        });
+
+        document.getElementById('newAnalysis').addEventListener('click', () => {
+          this.resetInterface();
+        });
+      }
+
+      downloadJSON(iocs, filename) {
+        const report = {
+          case_id: this.generateCaseId(),
+          timestamp: new Date().toISOString(),
+          tool_version: "3.0",
+          operation: "ioc_extraction",
+          status: "completed",
+          source_file: filename,
+          results: iocs,
+          summary: {
+            total_iocs: Object.values(iocs).reduce((sum, arr) => sum + arr.length, 0),
+            types_found: Object.keys(iocs).filter(type => iocs[type].length > 0)
+          }
+        };
+
+        const blob = new Blob([JSON.stringify(report, null, 2)], {
+          type: 'application/json'
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ioc_report_${filename}_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      generateCaseId() {
+        return 'CASE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      resetInterface() {
+        document.getElementById('uploadSection').style.display = 'block';
+        document.getElementById('processing').style.display = 'none';
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('textFile').value = '';
+      }
+
+      showError(message) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `
+          <div class="empty-state" style="color: #dc3545;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error</h3>
+            <p>${message}</p>
+            <button class="btn btn-secondary" onclick="location.reload()">
+              <i class="fas fa-redo"></i> Reintentar
+            </button>
+          </div>
+        `;
+        
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('processing').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+      }
+    }
+
+    // Inicializar la aplicación
+    document.addEventListener('DOMContentLoaded', () => {
+      new IoCExtractor();
+    });
+  </script>
+</body>
+</html>

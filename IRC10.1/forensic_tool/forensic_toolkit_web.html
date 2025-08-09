@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suite Forense Digital - Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      font-weight: 300;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .case-info {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .main-content {
+      padding: 2rem;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border-left: 5px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tool-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      font-size: 1.8rem;
+      color: white;
+    }
+
+    .tool-info h3 {
+      color: #333;
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .tool-info p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .tool-form {
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .file-input-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem;
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #6c757d;
+    }
+
+    .file-input-button:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .file-input-button i {
+      margin-right: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .results-panel {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .results-content {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .close-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .processing-indicator {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .result-section {
+      margin-bottom: 2rem;
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-section h4 {
+      color: #333;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .result-section h4 i {
+      margin-right: 0.5rem;
+      color: #667eea;
+    }
+
+    .result-item {
+      background: white;
+      padding: 0.8rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      font-family: 'Courier New', monospace;
+      border-left: 3px solid #28a745;
+      word-break: break-all;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      border-top: 3px solid #667eea;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #667eea;
+      display: block;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+
+    /* Colores específicos por herramienta */
+    .ioc-extractor { border-left-color: #e74c3c; }
+    .ioc-extractor .tool-icon { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+    .file-analyzer { border-left-color: #3498db; }
+    .file-analyzer .tool-icon { background: linear-gradient(135deg, #3498db, #2980b9); }
+
+    .hash-calculator { border-left-color: #f39c12; }
+    .hash-calculator .tool-icon { background: linear-gradient(135deg, #f39c12, #e67e22); }
+
+    .port-scanner { border-left-color: #9b59b6; }
+    .port-scanner .tool-icon { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+
+    .directory-scanner { border-left-color: #1abc9c; }
+    .directory-scanner .tool-icon { background: linear-gradient(135deg, #1abc9c, #16a085); }
+
+    .evidence-manager { border-left-color: #34495e; }
+    .evidence-manager .tool-icon { background: linear-gradient(135deg, #34495e, #2c3e50); }
+
+    .http-checker { border-left-color: #e67e22; }
+    .http-checker .tool-icon { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+    .timeline-generator { border-left-color: #27ae60; }
+    .timeline-generator .tool-icon { background: linear-gradient(135deg, #27ae60, #229954); }
+
+    @media (max-width: 768px) {
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .results-panel {
+        padding: 1rem;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-shield-virus"></i> Suite Forense Digital</h1>
+      <p>Herramientas profesionales para análisis forense y ciberseguridad</p>
+      <div class="case-info">
+        <strong>ID del Caso:</strong> <span id="caseId"></span> |
+        <strong>Sesión iniciada:</strong> <span id="sessionTime"></span>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="tools-grid">
+        
+        <!-- Extractor de IoCs -->
+        <div class="tool-card ioc-extractor">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-search-plus"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Extractor de IoCs</h3>
+              <p>Extrae indicadores de compromiso de archivos de texto</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Archivo de texto</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="iocFile" class="file-input" accept=".txt,.log,.md,text/*">
+                <div class="file-input-button" onclick="document.getElementById('iocFile').click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar archivo
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="processIoCs()">
+              <i class="fas fa-play"></i> Extraer IoCs
+            </button>
+          </div>
+        </div>
+
+        <!-- Analizador de Archivos -->
+        <div class="tool-card file-analyzer">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Analizador de Archivos</h3>
+              <p>Análisis completo de archivos con metadatos y hashes</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Archivo a analizar</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="analyzeFile" class="file-input">
+                <div class="file-input-button" onclick="document.getElementById('analyzeFile').click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar archivo
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="deepAnalysis"> Análisis profundo (strings y metadatos)
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeFile()">
+              <i class="fas fa-microscope"></i> Analizar Archivo
+            </button>
+          </div>
+        </div>
+
+        <!-- Calculadora de Hashes -->
+        <div class="tool-card hash-calculator">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-fingerprint"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Calculadora de Hashes</h3>
+              <p>Calcula hashes MD5, SHA1, SHA256 y SHA512</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Archivo</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="hashFile" class="file-input">
+                <div class="file-input-button" onclick="document.getElementById('hashFile').click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar archivo
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Algoritmos</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" checked id="hashSHA1"> SHA-1</label>
+                <label><input type="checkbox" checked id="hashSHA256"> SHA-256</label>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="calculateHashes()">
+              <i class="fas fa-calculator"></i> Calcular Hashes
+            </button>
+          </div>
+        </div>
+
+        <!-- Escáner de Puertos -->
+        <div class="tool-card port-scanner">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-network-wired"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Escáner de Puertos</h3>
+              <p>Simulación de escaneo de puertos</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Host objetivo</label>
+              <input type="text" class="form-control" id="scanHost" placeholder="192.168.1.1 o ejemplo.com">
+            </div>
+            <div class="form-group">
+              <label>Rango de puertos</label>
+              <select class="form-control" id="portRange">
+                <option value="1-1024">Puertos comunes (1-1024)</option>
+                <option value="21,22,23,25,53,80,110,443,993,995">Puertos críticos</option>
+                <option value="custom">Personalizado</option>
+              </select>
+            </div>
+            <div class="form-group" id="customPortGroup" style="display:none;">
+              <label>Puertos personalizados</label>
+              <input type="text" class="form-control" id="customPorts" placeholder="80,443,8080-8090">
+            </div>
+            <button class="btn btn-primary" onclick="scanPorts()">
+              <i class="fas fa-radar"></i> Escanear Puertos
+            </button>
+          </div>
+        </div>
+
+        <!-- Verificador HTTP -->
+        <div class="tool-card http-checker">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-globe"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Verificador de Headers HTTP</h3>
+              <p>Analiza cabeceras de seguridad HTTP</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>URL a verificar</label>
+              <input type="url" class="form-control" id="httpUrl" placeholder="https://ejemplo.com">
+            </div>
+            <button class="btn btn-primary" onclick="checkHttpHeaders()">
+              <i class="fas fa-search"></i> Verificar Headers
+            </button>
+          </div>
+        </div>
+
+        <!-- Generador de Timeline -->
+        <div class="tool-card timeline-generator">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Generador de Timeline</h3>
+              <p>Genera línea de tiempo basada en archivos subidos</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Archivos para timeline</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="timelineFiles" class="file-input" multiple>
+                <div class="file-input-button" onclick="document.getElementById('timelineFiles').click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar archivos múltiples
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Ordenar por</label>
+              <select class="form-control" id="timelineSortBy">
+                <option value="modified">Fecha de modificación</option>
+                <option value="created">Fecha de creación</option>
+                <option value="name">Nombre de archivo</option>
+                <option value="size">Tamaño</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="generateTimeline()">
+              <i class="fas fa-list"></i> Generar Timeline
+            </button>
+          </div>
+        </div>
+
+        <!-- Gestor de Evidencias -->
+        <div class="tool-card evidence-manager">
+          <div class="tool-header">
+            <div class="tool-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="tool-info">
+              <h3>Gestor de Evidencias</h3>
+              <p>Crea y verifica integridad de evidencias</p>
+            </div>
+          </div>
+          <div class="tool-form">
+            <div class="form-group">
+              <label>Archivo de evidencia</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="evidenceFile" class="file-input">
+                <div class="file-input-button" onclick="document.getElementById('evidenceFile').click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar archivo
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="verifyIntegrity"> Verificar integridad
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="manageEvidence()">
+              <i class="fas fa-gavel"></i> Gestionar Evidencia
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de resultados -->
+  <div class="results-panel" id="resultsPanel">
+    <div class="results-content">
+      <div class="results-header">
+        <h2 id="resultsTitle">Resultados del Análisis</h2>
+        <button class="close-btn" onclick="closeResults()">×</button>
+      </div>
+      <div class="processing-indicator" id="processingIndicator">
+        <div class="spinner"></div>
+        <p>Procesando...</p>
+      </div>
+      <div id="resultsContent"></div>
+      <div style="text-align: center; margin-top: 2rem;" id="actionButtons">
+        <button class="btn btn-success" onclick="downloadResults()">
+          <i class="fas fa-download"></i> Descargar Reporte JSON
+        </button>
+        <button class="btn btn-secondary" onclick="closeResults()">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Variables globales
+    let currentResults = null;
+    let currentOperation = '';
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      const now = new Date();
+      document.getElementById('sessionTime').textContent = now.toLocaleString('es-ES');
+      document.getElementById('caseId').textContent = generateCaseId();
+      
+      // Event listeners
+      document.getElementById('portRange').addEventListener('change', function() {
+        const customGroup = document.getElementById('customPortGroup');
+        customGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+      });
+    });
+
+    // Utilidades
+    function generateCaseId() {
+      const now = new Date();
+      const timestamp = now.getFullYear().toString() + 
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0') + '_' +
+                       now.getHours().toString().padStart(2, '0') + 
+                       now.getMinutes().toString().padStart(2, '0') + 
+                       now.getSeconds().toString().padStart(2, '0');
+      return 'CASE_' + timestamp;
+    }
+
+    function showResults(title, content, operation) {
+      document.getElementById('resultsTitle').textContent = title;
+      document.getElementById('resultsContent').innerHTML = content;
+      document.getElementById('resultsPanel').style.display = 'block';
+      document.getElementById('processingIndicator').style.display = 'none';
+      document.getElementById('actionButtons').style.display = 'block';
+      currentOperation = operation;
+    }
+
+    function showProcessing() {
+      document.getElementById('resultsPanel').style.display = 'block';
+      document.getElementById('processingIndicator').style.display = 'block';
+      document.getElementById('resultsContent').innerHTML = '';
+      document.getElementById('actionButtons').style.display = 'none';
+    }
+
+    function closeResults() {
+      document.getElementById('resultsPanel').style.display = 'none';
+    }
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(new Error('Error al leer archivo'));
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
+
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(new Error('Error al leer archivo'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function calculateFileHashes(buffer, algorithms) {
+      const hashes = {};
+      for (const algo of algorithms) {
+        try {
+          const algoName = algo === 'sha1' ? 'SHA-1' : 'SHA-256';
+          const hashBuffer = await crypto.subtle.digest(algoName, buffer);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          hashes[algo] = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {
+          hashes[algo] = 'No soportado en este navegador';
+        }
+      }
+      return hashes;
+    }
+
+    // Funciones de herramientas
+
+    async function processIoCs() {
+      const fileInput = document.getElementById('iocFile');
+      if (!fileInput.files[0]) {
+        alert('Por favor selecciona un archivo');
+        return;
+      }
+
+      showProcessing();
+
+      try {
+        const text = await readFileAsText(fileInput.files[0]);
+        const iocs = extractIoCs(text);
+        const totalIoCs = Object.values(iocs).reduce((sum, arr) => sum + arr.length, 0);
+
+        currentResults = {
+          case_id: document.getElementById('caseId').textContent,
+          timestamp: new Date().toISOString(),
+          tool_version: "3.0",
+          operation: "ioc_extraction",
+          status: "completed",
+          source_file: fileInput.files[0].name,
+          results: iocs,
+          summary: {
+            total_iocs: totalIoCs,
+            types_found: Object.keys(iocs).filter(type => iocs[type].length > 0)
+          }
+        };
+
+        showResults('Extractor de IoCs - Resultados', generateIoCsResultsHTML(iocs, fileInput.files[0].name), 'ioc_extraction');
+      } catch (error) {
+        showResults('Error', `<div class="result-section"><h4><i class="fas fa-exclamation-triangle"></i> Error</h4><p>${error.message}</p></div>`, 'error');
+      }
+    }
+
+    function extractIoCs(text) {
+      const patterns = {
+        ips: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
+        ipv6: /\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b/g,
+        domains: /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}\b/g,
+        urls: /https?:\/\/(?:[-\w.]|(?:%[\da-fA-F]{2}))+[^\s]*/g,
+        emails: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+        hashes: /\b[a-fA-F0-9]{32,64}\b/g,
+        file_paths: /[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*/g,
+        registry_keys: /HKEY_[A-Z_]+\\[^\\/:*?"<>|\r\n]+/g
+      };
+
+      const iocs = {};
+      Object.keys(patterns).forEach(type => {
+        const matches = text.match(patterns[type]) || [];
+        iocs[type] = [...new Set(matches)];
+      });
+
+      return iocs;
+    }
+
+    function generateIoCsResultsHTML(iocs, filename) {
+      const iocTypes = {
+        ips: { name: 'Direcciones IP', icon: 'fas fa-network-wired' },
+        ipv6: { name: 'Direcciones IPv6', icon: 'fas fa-project-diagram' },
+        domains: { name: 'Dominios', icon: 'fas fa-globe' },
+        urls: { name: 'URLs', icon: 'fas fa-link' },
+        emails: { name: 'Correos Electrónicos', icon: 'fas fa-envelope' },
+        hashes: { name: 'Hashes', icon: 'fas fa-fingerprint' },
+        file_paths: { name: 'Rutas de Archivo', icon: 'fas fa-folder-open' },
+        registry_keys: { name: 'Claves de Registro', icon: 'fas fa-key' }
+      };
+
+      let html = `<div class="stats-grid">`;
+      Object.keys(iocTypes).forEach(type =>
